@@ -130,22 +130,33 @@ class GoProPlus:
 
         downloaded_size = 0
         print('downloading to {}'.format(filepath))
+    
+        # Update progress every 10MB
+        update_interval = 10 * 1024 * 1024  # 10MB in bytes
+        last_update = 0
+
         with open(filepath, 'wb') as file:
             # Iterate over the response in chunks 8K chunks
             for chunk in resp.iter_content(chunk_size=8192):
-                # Write the chunk to the file
-                file.write(chunk)
+                if chunk:  # filter out keep-alive new chunks
+                    # Write the chunk to the file
+                    file.write(chunk)
 
-                # Update the downloaded size
-                downloaded_size += len(chunk)
-                progress = ((downloaded_size / 1024) / 1024)
+                    # Update the downloaded size
+                    downloaded_size += len(chunk)
+                    
+                    # Only update progress every 10MB
+                    if downloaded_size - last_update >= update_interval:
+                        progress = ((downloaded_size / 1024) / 1024)
 
-                if progress_mode == "inline":
-                    # Print the progress
-                    print(f"\rdownloaded: {progress:.2f}MB ({downloaded_size}) bytes", end='')
+                        if progress_mode == "inline":
+                            # Print the progress
+                            print(f"\rdownloaded: {progress:.2f}MB ({downloaded_size}) bytes", end='')
 
-                if progress_mode == "newline":
-                    print(f"downloaded: {progress:.2f}MB ({downloaded_size}) bytes")
+                        if progress_mode == "newline":
+                            print(f"downloaded: {progress:.2f}MB ({downloaded_size}) bytes")
+
+                        last_update = downloaded_size
 
         print("\ndownload completed!")
 
